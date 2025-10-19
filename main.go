@@ -4,21 +4,14 @@ import (
     "fmt"
     "log"
     "image/png"
-    "image/color"
     "os"
 )
 
-const (
-    BLACKCHAR = '\''
-    WHITECHAR = 'M'
-)
-
-var (
-    BLACK = color.RGBA{0, 0, 0, 255}
-)
-
 func main() {
-    f, err := os.Open("sample.png")
+    chars := " `'.,:;i+o*%&$#@"
+    lenChars := len(chars)
+
+    f, err := os.Open("sample2.png")
     if err != nil {
         log.Fatalf("%v\n", err)
     }
@@ -32,12 +25,20 @@ func main() {
     for y := 0; y < sample.Bounds().Dy(); y++ {
         for x := 0; x < sample.Bounds().Dx(); x++ {
             clr := sample.At(x, y)
-            if clr == BLACK {
-                fmt.Printf("%c", BLACKCHAR)
-            } else {
-                fmt.Printf("%c", WHITECHAR)
-            }
+            r, g, b, _ := clr.RGBA()
+            var intensity int = int(r + g + b)
+
+            intensity = intensity*lenChars / 768
+            fmt.Printf("%c", chars[iabs(intensity - lenChars) % lenChars])
         }
         fmt.Println("")
     }
+}
+
+func iabs(x int) int {
+    if (x < 0) {
+        return -x
+    }
+
+    return x
 }
