@@ -9,33 +9,40 @@ import (
     "os"
 )
 
-func main() {
-    chars := " `'.,:;i+o*%&$#@"
-    lenChars := len(chars)
+const (
+    PROGRAM_NAME = "asciiart"
+)
 
-    f, err := os.Open("sample3.png")
+func main() {
+    log.SetFlags(0)
+
+    args := os.Args
+    if len(args) < 2 {
+        log.Fatalf("%s: png file is missing\n", PROGRAM_NAME)
+    }
+
+    img, err := DecodeImage(args[1])
     if err != nil {
-        log.Fatalf("%v\n", err)
+        log.Fatalf("%v: %v\n", PROGRAM_NAME, err)
+    }
+
+    ToAscii(img)
+}
+
+func DecodeImage(path string) (image.Image, error) {
+    f, err := os.Open(path)
+    if err != nil {
+        return nil, err
     }
     defer f.Close()
 
-    sample, err := png.Decode(f)
+    img, err := png.Decode(f)
     if err != nil {
-        log.Fatalf("%v\n", err)
+        return nil, err
     }
 
-    imgGray := ToGrayscale(sample)
+    return ToGrayscale(img), nil
 
-    for y := 0; y < imgGray.Bounds().Dy(); y++ {
-        for x := 0; x < imgGray.Bounds().Dx(); x++ {
-            r, g, b, _ := imgGray.At(x, y).RGBA()
-            var intensity int = int(r + g + b)
-
-            intensity = intensity*lenChars / 768
-            fmt.Printf("%c", chars[iabs(intensity - lenChars) % lenChars])
-        }
-        fmt.Println("")
-    }
 }
 
 func ToGrayscale(img image.Image) image.Image {
@@ -50,8 +57,23 @@ func ToGrayscale(img image.Image) image.Image {
         }
     }
 
-
     return newImg
+}
+
+func ToAscii(img image.Image) {
+    chars := " `'.,:;i+o*%&$#@"
+    lenChars := len(chars)
+
+    for y := 0; y < img.Bounds().Dy(); y++ {
+        for x := 0; x < img.Bounds().Dx(); x++ {
+            r, g, b, _ := img.At(x, y).RGBA()
+            var intensity int = int(r + g + b)
+
+            intensity = intensity*lenChars / 768
+            fmt.Printf("%c", chars[iabs(intensity - lenChars) % lenChars])
+        }
+        fmt.Println("")
+    }
 }
 
 func iabs(x int) int {
