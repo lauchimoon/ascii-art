@@ -41,23 +41,7 @@ func DecodeImage(path string) (image.Image, error) {
         return nil, err
     }
 
-    return ToGrayscale(img), nil
-
-}
-
-func ToGrayscale(img image.Image) image.Image {
-    newImg := image.NewRGBA(img.Bounds())
-    for y := 0; y < img.Bounds().Dy(); y++ {
-        for x := 0; x < img.Bounds().Dx(); x++ {
-            r, g, b, _ := img.At(x, y).RGBA()
-            luminosity := 0.299*float64(r) + 0.587*float64(g) + 0.114*float64(b) 
-
-            clr := color.RGBA{uint8(luminosity/256), uint8(luminosity/256), uint8(luminosity/256), 255}
-            newImg.Set(x, y, clr)
-        }
-    }
-
-    return newImg
+    return img, nil
 }
 
 func ToAscii(img image.Image) {
@@ -66,14 +50,19 @@ func ToAscii(img image.Image) {
 
     for y := 0; y < img.Bounds().Dy(); y++ {
         for x := 0; x < img.Bounds().Dx(); x++ {
-            r, g, b, _ := img.At(x, y).RGBA()
-            var intensity int = int(r + g + b)
-
-            intensity = intensity*lenChars / 768
+            intensity := GetPixelIntensity(img, x, y, lenChars)
             fmt.Printf("%c", chars[iabs(intensity - lenChars) % lenChars])
         }
         fmt.Println("")
     }
+}
+
+func GetPixelIntensity(img image.Image, x, y, lenChars int) int {
+    pixel := img.At(x, y)
+    r, g, b, _ := color.GrayModel.Convert(pixel).RGBA()
+
+    intensity := int(r + g + b)
+    return intensity*lenChars / 768
 }
 
 func iabs(x int) int {
